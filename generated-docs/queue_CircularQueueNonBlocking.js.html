@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: queue/CircularQueueNonBlocking.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: queue/CircularQueueNonBlocking.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const {
+    createDiscardItemRule,
+    isDiscardItemRule,
+    isValidOverfillRule
+} = require('./OverfillRules')
+
+
+/**
+ *
+ *
+ * @class CircularQueueNonBlocking
+ */
+class CircularQueueNonBlocking {
+  constructor({capacity, evictionCallback, overfillRule}) {
+    if (typeof capacity !== 'number' || capacity &lt; 1) {
+      throw new Error('Please specify capacity of the Queue')
+    }
+
+    if (!!evictionCallback &amp;&amp; typeof evictionCallback !== 'function') {
+      throw new Error('evictionCallback should be a function')
+    }
+
+    this.overfillRule = isValidOverfillRule(overfillRule)
+      ? overfillRule
+      : createDiscardItemRule()
+
+    this.head = 0
+    this.tail = 0
+    this.size = 0
+    this.items = Array.from({ length: capacity })
+    this.capacity = capacity
+    this.evictionCallback = evictionCallback || null
+  }
+
+
+  
+  /**
+   * Enqueue (add) an item to the queue
+   *
+   * @public
+   * @param {any} item
+   * @return {Boolean} 
+   * @memberof CircularQueueNonBlocking
+   */
+  enqueue(item) {
+    if (this.isFull()) {
+      if (isDiscardItemRule(this.overfillRule)) {
+        return false
+      }
+
+      const removedItem = this.#rotateHead()
+
+      if (this.evictionCallback) {
+        this.evictionCallback(removedItem)
+      }
+
+      this.items[this.tail] = item
+
+      this.tail = (this.tail + 1) % this.capacity
+      return true
+    }
+
+    this.items[this.tail] = item
+    this.tail = (this.tail + 1) % this.capacity
+    this.size++
+    return true
+  }
+
+  
+  /**
+   * Dequeue one item from the queue
+   *
+   * @public
+   * @return {any} 
+   * @memberof CircularQueueNonBlocking
+   */
+  dequeue() {
+    if (this.isEmpty()) throw new Error('Queue is empty!')
+
+    const removedItem = this.peek()
+
+    this.items[this.head] = undefined
+
+    this.head = (this.head + 1) % this.capacity
+    this.size--
+    return removedItem
+  }
+  
+  
+  /**
+   * Peek at head item without dequeueing it
+   *
+   * @public
+   * @return {any} 
+   * @memberof CircularQueueNonBlocking
+   */
+  peek() {
+    return this.items[this.head]
+  }
+  
+  
+  /**
+   * Rotate head item to end of queue
+   *
+   * @private
+   * @return {*} 
+   * @memberof CircularQueueNonBlocking
+   */
+  #rotateHead() {
+    const removedItem = this.peek()
+    this.head = (this.head + 1) % this.capacity
+
+    return removedItem
+  }
+
+  
+  /**
+   * Is the queue filled to capacity
+   *
+   * @return {boolean} 
+   * @memberof CircularQueueNonBlocking
+   */
+  isFull() {
+    return this.capacity === this.size
+  }
+
+  
+  /**
+   * Is the queue empty
+   *
+   * @return {*} 
+   * @memberof CircularQueueNonBlocking
+   */
+  isEmpty() {
+    return this.size === 0
+  }
+  
+  
+  /**
+   * Current number of items in the queue (same as .size)
+   *
+   * @public
+   * @return {integer} 
+   * @memberof CircularQueueNonBlocking
+   */
+  length() {
+    return this.size
+  }
+  
+  
+  /**
+   * Remove all items from the queue
+   *
+   * @public
+   * @memberof CircularQueueNonBlocking
+   */
+  clear() {
+    this.items = []
+    this.head = 0
+    this.tail = 0
+    this.size = 0
+  }
+  
+  
+  /**
+   * returns an array populated with the queued items
+   *
+   * @return {*} 
+   * @memberof CircularQueueNonBlocking
+   */
+  toArray() {
+    return [...this.items]
+  }
+
+  
+  /**
+   * Fills the queue from an array of items
+   *
+   * @param {*} items
+   * @memberof CircularQueueNonBlocking
+   */
+  refill(items) {
+    items.forEach( (item) => {
+      this.enqueue(item)
+    })
+  }
+
+  
+  /**
+   * Factory for creating a new CircularQueueNonBlocking populated from an array of values
+   *
+   * @static
+   * @param {items} items
+   * @param {Array} options
+   * @return {CircularQueueNonBlocking} 
+   * @memberof CircularQueueNonBlocking
+   */
+  static createFromArray(items, options) {
+    const result = new CircularQueueNonBlocking(options)
+    items.forEach(item => result.enqueue(item))
+
+    return result
+  }
+
+  
+  /**
+   * Creates a config object suitable for passing to CircularQueueNonBlocking.createFromArray
+   *
+   * @static
+   * @param {integer} capacity
+   * @param {function} evictionCallback
+   * @param {string} overfillRule
+   * @return {object} 
+   * @memberof CircularQueueNonBlocking
+   */
+  static createOptions(capacity, evictionCallback, overfillRule) {
+    return {capacity, evictionCallback, overfillRule}
+  }
+}
+
+module.exports = CircularQueueNonBlocking</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CircularQueueNonBlocking.html">CircularQueueNonBlocking</a></li><li><a href="DiceRoller.html">DiceRoller</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ErrorFactory">ErrorFactory</a></li><li><a href="global.html#composeRandomOrgUrl">composeRandomOrgUrl</a></li><li><a href="global.html#convertRandomToDieValue">convertRandomToDieValue</a></li><li><a href="global.html#getRandomIntegers">getRandomIntegers</a></li><li><a href="global.html#isNotNumber">isNotNumber</a></li><li><a href="global.html#isNumber">isNumber</a></li><li><a href="global.html#isSupportedFaceCount">isSupportedFaceCount</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri May 02 2025 00:44:11 GMT-0700 (Pacific Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
