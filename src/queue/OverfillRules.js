@@ -1,3 +1,5 @@
+"use strict;"
+
 const DiscardItem = 'DiscardItem'
 const ReplaceWithItem = 'ReplaceWithItem'
 

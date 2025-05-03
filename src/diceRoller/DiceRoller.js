@@ -92,8 +92,8 @@ class DiceRoller {
      * Returns the result of a random roll.
      *
      * @public
-     * @param {integer} dieFaceCount face count of die to be rolled
-     * @return {integer} result of roll
+     * @param {integer} dieFaceCount Face count of die to be rolled
+     * @return {integer} Result of roll
      * @memberof DiceRoller
      */
     async roll(dieFaceCount) {
