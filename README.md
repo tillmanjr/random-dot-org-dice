@@ -20,6 +20,16 @@ It publishes a dice roll with a simple method, `roll`. `roll` takes a single int
 - [@tillmanjr](https://www.github.com/tillmanjr)
 
 
+## Documentation
+
+Automatically generated source documentation, via JSDoc, can be found in `generated-docs`.
+
+To view it, open `generated-docs/index.html` in a browser. 
+
+
+## Requirements
+
+For development, you will only need Node.js, a node global package, npm or Yarn, and Jest installed in your environement.
 ## Run Locally
 
 Clone the project
