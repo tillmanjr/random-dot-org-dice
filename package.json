@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node testQueue.js",
+    "startServer": "node src/service.js",
     "test": "jest",
     "test.coverage": "jest --coverage"
   },
@@ -11,7 +12,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "eslint": "^9.25.1"
+    "eslint": "^9.25.1",
+    "express": "^5.1.0"
   },
   "devDependencies": {
     "jest": "^29.7.0"

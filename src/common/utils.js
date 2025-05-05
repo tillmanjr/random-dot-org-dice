@@ -62,12 +62,60 @@ const convertRandomToDieValue = (randomValue, dieFaceCount) => {
         : remainder
 }
 
+const composeGetRandomIntegersResult = (success, statusCode, data, errorMessage) => {
+    const error = !success 
+        ? {errorMessage}
+        : null
+
+    const result = {
+        success,
+        statusCode,
+        timestamp: new Date().getTime()
+    }
+
+    return success
+        ? { ...result, data}
+        : { ...result, ...error}
+}
+
+const composeRollHistoryItem = (timestamp, faces, roll, randomValue) => ({
+    timestamp: timestamp,
+    faces: faces,
+    roll: roll,
+    randomValue: randomValue
+})
+
+const composeFetchRandomsHistoryItem = (fetchResult) => {
+    const success = fetchResult.success
+
+    const successResultString = success
+        ? 'SUCCESS'
+        : 'FAILURE'
+
+    const count = success
+        ? fetchResult.data.length
+        : 0
+
+    const details = success
+        ? fetchResult.statusCode
+        : `${fetchResult.statusCode}::${fetchResult.error}`
+
+    return {
+        timestamp: fetchResult.timestamp,
+        result: successResultString,
+        count,
+        details
+    }
+}
+
 module.exports = {
     test: {
-        convertRandomToDieValue,
         isNumber,
         isNotNumber,
         isSupportedFaceCount
     },
+    composeFetchRandomsHistoryItem,
+    composeRollHistoryItem,
+    composeGetRandomIntegersResult,
     convertRandomToDieValue
 }

@@ -1,6 +1,8 @@
 'use strict;'
 
+const {composeGetRandomIntegersResult} = require('../common/utils')
 const ErrorFactory = require('../common/errorFactory')
+
 
 /**
  * Returns the random.org GET url for fetching a set of random integers  
@@ -15,6 +17,8 @@ const ErrorFactory = require('../common/errorFactory')
 function composeRandomOrgUrl(host, path, lowerBound, upperBound, count) {
   return `${host}/${path}/?num=${count}&min=${lowerBound}&max=${upperBound}&col=1&base=10&format=plain&rnd=new`
 }
+
+// http://www.random.org/integers/?num=10&min=1&max=6&col=1&base=10&format=plain&rnd=new
 
 
 /**
@@ -38,19 +42,24 @@ async function getRandomIntegers(config, urlCallback) {
     : composeRandomOrgUrl(host, path, lowerBound, upperBound, count)
     try {
       const response = await fetch(url);
-      if (!response.ok) {
-        throw ErrorFactory.createResponseStatusErrorException(response.status);
+
+      const success = response.ok
+
+      if (!success) {
+        return composeGetRandomIntegersResult(false, null, response.status, response.statusText)
       }
   
       const body = await response.text();
       const result = body.split('\n')
       const randoms = result.map(x => parseInt(x))
 
-      return randoms.length > count
+      const data = randoms.length > count
         ? randoms.slice(0, count - 1)
         : randoms
+
+      return composeGetRandomIntegersResult(true, response.status, data)
     } catch (error) {
-      console.error(error.message);
+      return composeGetRandomIntegersResult(false, null, -1, error.message)
     }
   }
   
